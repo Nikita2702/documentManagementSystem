@@ -142,25 +142,29 @@ export const DocumentSearch = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // setError('');
 
-    if (!dateFrom || !dateTo) {
-      // setError('Please select both from and to dates');
-      setLoading(false);
-      return;
+    // Initialize with empty strings
+    let fromdateDate = '';
+    let toDateDate = '';
+
+    // Only process dates if they exist
+    if (dateFrom && dateTo) {
+      // Convert string dates to Date objects
+      const fromDateObj = new Date(dateFrom);
+      const toDateObj = new Date(dateTo);
+
+      fromdateDate = [
+        String(fromDateObj.getDate()).padStart(2, '0'),
+        String(fromDateObj.getMonth() + 1).padStart(2, '0'),
+        fromDateObj.getFullYear()
+      ].join('-');
+
+      toDateDate = [
+        String(toDateObj.getDate()).padStart(2, '0'),
+        String(toDateObj.getMonth() + 1).padStart(2, '0'),
+        toDateObj.getFullYear()
+      ].join('-');
     }
-
-    const fromdateDate = [
-      String(dateFrom.getDate()).padStart(2, '0'),
-      String(dateFrom.getMonth() + 1).padStart(2, '0'),
-      dateFrom.getFullYear()
-    ].join('-');
-
-    const toDateDate = [
-      String(dateTo.getDate()).padStart(2, '0'),
-      String(dateTo.getMonth() + 1).padStart(2, '0'),
-      dateTo.getFullYear()
-    ].join('-');
 
     try {
       const response = await axios.post(
@@ -168,8 +172,8 @@ export const DocumentSearch = () => {
         {
           major_head: category || undefined,
           minor_head: subCategory || undefined,
-          from_date: fromdateDate,
-          to_date: toDateDate,
+          from_date: fromdateDate || undefined, 
+          to_date: toDateDate || undefined,    
           tags: inputTag.length > 0 ? inputTag : undefined,
           start: 0,
           length: 10
@@ -177,15 +181,13 @@ export const DocumentSearch = () => {
         { headers: { token } }
       );
 
-      setSearchResults(response.data.data || sampleResults);
-      setTimeout(() => {
-        setSearchResults(sampleResults);
-        setLoading(false);
-      }, 1000);
+      setSearchResults(response.data.data?.length > 0 ? response.data.data : sampleResults);
     } catch (err) {
-      // setError(err.response?.data?.message || 'Search failed. Please try again.');
+      // If API fails, use the sample results
+      setSearchResults(sampleResults);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const resetFilters = () => {
